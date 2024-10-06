@@ -3,7 +3,7 @@ const { sequelize } = require('../config/db')
 
 const User = sequelize.define('User', {
     id: {
-        tyoe: DataTypes.INTEGER,
+        type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
     },
@@ -21,8 +21,13 @@ const User = sequelize.define('User', {
         allowNull: false,
     },
     phone: {
-        type: DataTypes.BIGINT,
+        type: DataTypes.STRING,
         allowNull: false,
+    },
+    role: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: 'user',  // Por defecto, todos los usuarios serán "user"
     },
 }, {
     timestamps: true,
