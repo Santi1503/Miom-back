@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs');
+const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
@@ -116,4 +117,78 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser, updateUserRole, getAllUsers };
+const sendPasswordResetEmail = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ where: { email } });
+
+    if (!user) {
+      return res.status(404).json({ msg: 'No se encontró ningún usuario con este correo' });
+    }
+
+    // Generar un token de recuperación
+    const resetToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    // Configurar el enlace de recuperación
+    const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
+
+    // Configurar el transporte de correo
+    const transporter = nodemailer.createTransport({
+      service: 'Gmail', // Puedes usar otro servicio como Outlook, Mailgun, etc.
+      auth: {
+        user: process.env.EMAIL_USER, // Asegúrate de configurar estas variables en .env
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    // Configuración del mensaje de correo
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Recupera tu contraseña',
+      html: `
+        <p>Haz clic en el siguiente enlace para recuperar tu contraseña:</p>
+        <a href="${resetLink}">Recuperar contraseña</a>
+      `, // Aquí usamos HTML en lugar de texto plano
+    };
+
+    // Enviar el correo
+    await transporter.sendMail(mailOptions);
+
+    res.json({ msg: 'Enlace de recuperación enviado al correo' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: 'Error del servidor' });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  const { token, newPassword } = req.body
+
+  try {
+    // Verificar el token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+
+    // Buscar al usuario
+    const user = await User.findByPk(decoded.id)
+    if(!user) {
+      return res.status(404).json({ msg: 'Usuario no encontrado' })
+    }
+
+    // Cifrar la contrasña
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(newPassword, salt)
+
+    // Actualizar la conraseña en la base de datos
+    user.password = hashedPassword
+    await user.save()
+    res.json({ msg: 'Contraseña actualizada correctamente'})
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ msg: 'Error al actualizar la contraseña' })
+  }
+}
+
+
+module.exports = { registerUser, loginUser, updateUserRole, getAllUsers, sendPasswordResetEmail, resetPassword };
