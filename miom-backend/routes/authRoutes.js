@@ -18,6 +18,7 @@ router.get('/users', verifyToken, checkRole(['superadmin']), getAllUsers);
 // Ruta para recuperar la contraseña de los usuarios
 router.post('/forgot-password', sendPasswordResetEmail);
 
+// Ruta para cambiar la contraseña de los usuarios
 router.post('/reset-password', resetPassword);
 
 module.exports = router;

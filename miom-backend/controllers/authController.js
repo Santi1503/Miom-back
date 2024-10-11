@@ -10,7 +10,7 @@ const registerUser = async (req, res) => {
   try {
     let user = await User.findOne({ where: { email } });
     if (user) {
-      return res.status(400).json({ msg: 'El usuario ya existe' });
+      return res.status(400).json({ msg: 'El correo ya existe. Intenta iniciando sesión' });
     }
 
     // Cifrar la contraseña
@@ -53,12 +53,12 @@ const loginUser = async (req, res) => {
   try {
     let user = await User.findOne({ where: { email } });
     if (!user) {
-      return res.status(400).json({ msg: 'Credenciales inválidas' });
+      return res.status(400).json({ msg: 'Correo o contraseña incorrecta' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ msg: 'Credenciales inválidas' });
+      return res.status(400).json({ msg: 'Correo o contraseña incorrecta' });
     }
 
     const payload = { user: { id: user.id } };

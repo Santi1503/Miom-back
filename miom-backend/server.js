@@ -2,6 +2,9 @@ const express = require('express')
 const { connectDB, sequelize } = require('./config/db')
 const cors = require('cors')
 const dotenv = require('dotenv')
+const taskRoutes = require('./routes/taskRoutes')
+const examRoutes = require('./routes/examRoutes')
+const noteRoutes = require('./routes/noteRoutes')
 
 // cargar las variables .env
 dotenv.config()
@@ -18,6 +21,11 @@ app.use(cors())
 
 // rutas de autenticacion
 app.use('/api/auth', require('./routes/authRoutes'))
+
+// Rutas para creacion de tareas y examenes
+app.use('/api/tasks', taskRoutes);
+app.use('/api/exams', examRoutes);
+app.use('/api/notes', noteRoutes);
 
 // sincornizar los modelos y luego levantar el servidor
 sequelize.sync({ alter: true })
